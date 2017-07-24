@@ -1,3 +1,6 @@
+from nltk.corpus import brown
+from gensim.models import word2vec
+
 # output file
 filename = 'vectors.txt'
 
@@ -7,8 +10,7 @@ def load_sentences_brown(nb_sentences=None):
     :param nb_sentences: Use if all brown sentences are too many
     :return: index2word (list of string)
     """
-    from nltk.corpus import brown
-    import gensim
+
 
     print 'building vocab ...'
 
@@ -18,16 +20,16 @@ def load_sentences_brown(nb_sentences=None):
         sents = brown.sents()[:nb_sentences]
 
     # I use gensim model only for building vocab
-    model = gensim.models.Word2Vec()
+    model = word2vec.Word2Vec()
     model.build_vocab(sents)
-    vocab = model.vocab
+    vocab = model.wv.vocab
 
     # ids: list of (list of word-id)
     ids = [[vocab[w].index for w in sent
             if w in vocab and vocab[w].sample_int > model.random.rand() * 2**32]
            for sent in sents]
 
-    return ids, model.index2word
+    return ids, model.wv.index2word
 
 
 def skip_grams(sentences, window, vocab_size, nb_negative_samples=5.):

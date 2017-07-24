@@ -1,11 +1,12 @@
-from keras.layers import Input, merge, Activation
+from keras.layers import Input, Activation
 from keras.models import Model
+from keras.layers.core import Flatten
+from keras.layers.merge import Dot
 from keras.layers.embeddings import Embedding
 import utils
-
+import random
 
 def batch_generator(cpl, lbl):
-    import random
 
     # trim the tail
     garbage = len(labels) % batch_size
@@ -68,11 +69,11 @@ embedded_ctx = Embedding(input_dim=vocab_size,
                          output_dim=vec_dim,
                          input_length=1)(input_ctx)
 
-merged = merge(inputs=[embedded_pvt, embedded_ctx],
-               mode=lambda x: (x[0] * x[1]).sum(-1),
-               output_shape=(batch_size, 1))
+merged = Dot(axes=-1)([embedded_pvt, embedded_ctx])
 
-predictions = Activation('sigmoid')(merged)
+flatten = Flatten()(merged)
+
+predictions = Activation('sigmoid')(flatten)
 
 
 # build and train the model
