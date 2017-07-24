@@ -22,6 +22,7 @@ def batch_generator(cpl, lbl):
 
     pvt = cpl[:, 0][:-garbage]
     ctx = cpl[:, 1][:-garbage]
+    lbl = lbl[:-garbage]
     lbl_ctx = lbl[:, 0][:-garbage]
     lbl_cilin = lbl[:, 1][:-garbage]
 
