@@ -77,11 +77,11 @@ predictions = Activation('sigmoid')(flatten)
 
 
 # build and train the model
-model = Model(input=[input_pvt, input_ctx], output=predictions)
+model = Model(inputs=[input_pvt, input_ctx], outputs=predictions)
 model.compile(optimizer='rmsprop', loss='mse', metrics=['accuracy'])
 model.fit_generator(generator=batch_generator(couples, labels),
-                    samples_per_epoch=samples_per_epoch,
-                    nb_epoch=nb_epoch, verbose=1)
+                    steps_per_epoch=samples_per_epoch,
+                    epochs=nb_epoch, verbose=1)
 
 # save weights
 utils.save_weights(model, index2word, vec_dim)

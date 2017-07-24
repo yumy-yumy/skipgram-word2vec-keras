@@ -1,5 +1,5 @@
 from nltk.corpus import brown
-from gensim.models import word2vec
+from gensim.models import word2vec, KeyedVectors
 
 # output file
 filename = 'vectors.txt'
@@ -87,7 +87,6 @@ def most_similar(positive=[], negative=[]):
     :param negative: list of string
     :return:
     """
-    from gensim import models
-    vec = models.word2vec.Word2Vec.load_word2vec_format(filename, binary=False)
+    vec = KeyedVectors.Word2Vec.load_word2vec_format(filename, binary=False)
     for v in vec.most_similar_cosmul(positive=positive, negative=negative, topn=20):
         print(v)
