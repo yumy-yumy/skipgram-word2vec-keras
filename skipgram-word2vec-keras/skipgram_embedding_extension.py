@@ -22,7 +22,6 @@ def batch_generator(cpl, lbl):
 
     pvt = cpl[:, 0][:-garbage]
     ctx = cpl[:, 1][:-garbage]
-    lbl = lbl[:-garbage]
     lbl_ctx = lbl[:, 0][:-garbage]
     lbl_cilin = lbl[:, 1][:-garbage]
 
@@ -87,6 +86,7 @@ flatten = Flatten()(merged)
 dense = Dense(2)(flatten)
 predictions = Activation('sigmoid')(dense)
 
+# y_true - {(0,1]: distance, 0:unknown}
 def mean_squared_error_cilin(y_true, y_pred, nonzero_count):
     index = K.not_equal(y_true, 0)
     index = K.cast(index, y_true.dtype)
