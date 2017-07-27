@@ -1,3 +1,2 @@
-# skipgram-word2vec-keras
+# word embedding models implemented by keras
 
-This is a simple implementation of word-embedding in keras.
