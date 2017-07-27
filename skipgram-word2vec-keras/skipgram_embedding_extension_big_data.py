@@ -9,16 +9,18 @@ from keras.metrics import binary_accuracy
 import keras.backend as K
 import utils_extension as utils
 from cilin import CilinSimilarity
+from ioFile import load_object, save_object
 import tensorflow as tf
 import random
+from os import walk, path
 
 # text file containing sentences where words are separated
 data_file = '../ganyan_sentence_clean.txt'
 
-def batch_generator(cpl, lbl):
+def batch_generator(cpl, lbl, nb_batch):
 
     # trim the tail
-    garbage = len(labels) % batch_size
+    garbage = len(lbl) % batch_size
 
     pvt = cpl[:, 0][:-garbage]
     ctx = cpl[:, 1][:-garbage]
@@ -43,31 +45,60 @@ def batch_generator(cpl, lbl):
             # feed i th batch
             yield ([pvt[begin: end], ctx[begin: end]], lbl[begin: end])
             
+def traverseDirectory(dirpath):
+    for (dirpath, dirnames, filenames) in walk(dirpath):
+        filenames = sorted(filenames)
+        break
+    full_fnames = []
+    for fname in filenames:
+        fname = path.join(dirpath, fname)
+        full_fnames.append(fname)
             
+    return full_fnames
+
+def train_model_for_big_data(data_dir='data'):
+    model = Model(inputs=[input_pvt, input_ctx], outputs=predictions)
+    model.compile(optimizer='rmsprop', loss=loss_with_cilin, metrics=[metric_with_cilin])
+    fname_list = traverseDirectory(path.join(data_dir, 'couples'))
+    isFirst = True
+    for fname in fname_list:
+        print fname
+        couples = load_object(fname)
+        index = fname[fname.find('couples_'):].lstrip('couples_').rstrip('.pkl')
+        fname = path.join(data_dir, 'labels', 'labels_'+index+'.pkl')
+        print fname
+        labels = load_object(fname)
+        # metrics
+        nb_batch = len(labels) // batch_size
+        samples_per_epoch = batch_size * nb_batch
+        if not isFirst:
+            model.set_weights(weights)
+        model.fit_generator(generator=batch_generator(couples, labels, nb_batch),
+                    steps_per_epoch=samples_per_epoch,
+                    epochs=nb_epoch, verbose=1, workers=1)
+        weights = model.get_weights()
 
 
 # load data
 # - sentences: list of (list of word-id)
 # - index2word: list of string
-sentences, index2word = utils.load_sentences(data_file, 100)
+#sentences, index2word = utils.load_sentences(data_file)
+#sentences = load_object('sentences.pkl')
+index2word = load_object('index2word.pkl')
 # params
 nb_epoch = 3
 # learn `batch_size words` at a time
-batch_size = 10
+batch_size = 60
 vec_dim = 50
 # half of window
 window_size = 5
 vocab_size = len(index2word)
 
 # create input
-couples, labels = utils.skip_grams_with_cilin(index2word, sentences, window_size, vocab_size)
-print 'shape of couples: ', couples.shape
-print 'shape of labels: ', labels.shape
+#data_size = skip_grams_with_cilin_for_big_data(index2word, sentences, window, vocab_size)
+#print data_size
 
-
-# metrics
-nb_batch = len(labels) // batch_size
-samples_per_epoch = batch_size * nb_batch
+data_size = 268350544
 
 
 # graph definition (pvt: center of window, ctx: context)
@@ -139,16 +170,17 @@ def metric_with_cilin(y_true, y_pred):
   weights = tf.constant([0.5, 0.5]) 
   accuracy = tf.reduce_sum(tf.multiply(weights, tf.stack([accuracy_sg, accuracy_cilin])))
   return accuracy
+       
+train_model_for_big_data()
 
 # build and train the model
-model = Model(inputs=[input_pvt, input_ctx], outputs=predictions)
+#model = Model(inputs=[input_pvt, input_ctx], outputs=predictions)
 #model.summary()
-model.compile(optimizer='rmsprop', loss=loss_with_cilin, metrics=[metric_with_cilin])
-model.fit_generator(generator=batch_generator(couples, labels),
-                    steps_per_epoch=samples_per_epoch,
-                    epochs=nb_epoch, verbose=1)
-
+#model.compile(optimizer='rmsprop', loss=loss_with_cilin, metrics=[metric_with_cilin])
+#model.fit_generator(generator=batch_generator_for_big_data(),
+#                    steps_per_epoch=samples_per_epoch,
+#                    epochs=nb_epoch, verbose=1)
 
 
 # save weights
-#utils.save_weights(model, index2word, vec_dim)
+utils.save_weights(model, index2word, vec_dim)
